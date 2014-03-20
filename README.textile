@@ -1,7 +1,6 @@
-"!important":http://github.com/premasagar/important/ is a CSS !important manipulator (jQuery plugin).
+I forked this since it was a fairly heavy rewrite of an existing plugin.
+This lets you use JQuery's existing .css() .width() and .height() functions to set css values on an element with or without the "!important" CSS flag.
+Without this plugin you couldn't use JQuery to set the attribute if it was currently set with the "!important" flag,
+and you can't use JQuery to add the flag to any attribute.
 
-* by "Premasagar Rose":http://github.com/premasagar
-** "premasagar.com":http://premasagar.com / "dharmafly.com":http://dharmafly.com
-* "MIT license":http://opensource.org/licenses/mit-license.php
-
-Full documentation to come. For now, clone the code and open demo/index.html in the browser.
+Based on: http://github.com/premasagar/important/
