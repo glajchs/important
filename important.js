@@ -10,8 +10,8 @@
 
     license
         opensource.org/licenses/mit-license.php
-        
-    v0.2
+
+    v0.3
 
 *//*
     creates methods
@@ -22,9 +22,9 @@
 
     and wraps the native jQuery CSS methods: css(), width(), height(),
     allowing an optional last argument of boolean true, to pass the request through the !important function
-    
+
     use jQuery.important.noConflict() to revert back to the native jQuery methods, and returns the overriding methods
-    
+
     reference
         http://www.w3.org/TR/CSS2/syndata.html#tokenization
 
@@ -48,7 +48,7 @@
     // e.g. declaration('width', '50%', 'margin:2em; width:auto;');
     function cssDeclaration(property, value, rules, makeImportant, elem){ // if value === null, then remove from style; if style then merge with that
         var oldDeclaration, newDeclaration;
-        
+
         rules = rules || '';
         oldDeclaration = find(property, rules);
 
@@ -69,7 +69,7 @@
             }
             rules = rules.replace(oldDeclaration[0], newDeclaration);
         }
-        
+
         else if (typeof newDeclaration !== 'undefined'){
             rules = $.trim(rules);
             if (rules !== ''){
@@ -82,8 +82,8 @@
         }
         return rules;
     }
-    
-    
+
+
     // Add !important to CSS rules if they don't already have it
     function toImportant(rulesets, makeImportant){
         // Cache regular expression
@@ -100,7 +100,7 @@
             return $1 ? $0 : ' !important;';
         });
     }
-    
+
     function htmlStylesToImportant(html, makeImportant){
         // Cache regular expression
         var re = htmlStylesToImportant.re;
@@ -113,7 +113,7 @@
         });
     }
 
-    
+
     var important = false;
     var original = {};
     var controller = {};
@@ -128,7 +128,7 @@
         original[method] = $.fn[method];
         controller[method] = function() {
             var args = $.makeArray(arguments);
-            var elem = $(this);
+            var elem = this;
             if (elem.length < 1) {
                 return original[method].apply(elem, args);
             }
@@ -144,6 +144,9 @@
                     // .css(properties, important) --- SET
                     var returnValue = true;
                     var propertyNames = Object.keys(args[0]);
+                    if (propertyNames.length === 0) {
+                        return original[method].apply(elem, args);
+                    }
                     for (var i = 0; i < propertyNames.length; i++) {
                         var propertyName = propertyNames[i];
                         var propertyValue = args[0][propertyNames[i]];
@@ -151,7 +154,7 @@
                         returnValue = (!returnValue) ? returnValue : applyStyleToElement(elem, propertyName,
                                 propertyValue, (isImportantParam === true || important === true), method, [propertyName, propertyValue]);
                     }
-                    return returnValue;
+                    return returnValue || elem;
                 }
             } else if (args.length === 1) {
                 // .css(propertyName) --- GET
@@ -165,7 +168,8 @@
                 var propertyName = args[0];
                 var propertyValue = args[1];
                 var isImportantParam = args[2];
-                return applyStyleToElement(elem, propertyName, propertyValue, (isImportantParam === true || important === true), method, [propertyName, propertyValue]);
+                applyStyleToElement(elem, propertyName, propertyValue, (isImportantParam === true || important === true), method, [propertyName, propertyValue]);
+                return elem;
             } else {
                 // This is an invalid set of arguments, or there is a bug in our processing of
                 // the different ways .css() can be called so just call the original function
@@ -177,7 +181,7 @@
         original[method] = $.fn[method];
         controller[method] = function() {
             var args = $.makeArray(arguments);
-            var elem = $(this);
+            var elem = this;
             if (elem.length < 1) {
                 return original[method].apply(elem, args);
             }
@@ -192,7 +196,8 @@
                 var propertyName = method;
                 var propertyValue = args[0];
                 var isImportantParam = args[1];
-                return applyStyleToElement(elem, propertyName, propertyValue, (isImportantParam === true || important === true), method, [propertyValue]);
+                applyStyleToElement(elem, propertyName, propertyValue, (isImportantParam === true || important === true), method, [propertyValue]);
+                return elem;
             }
         };
     });
@@ -306,27 +311,27 @@
 
         return retVal;
     }
-    
+
     // Override the native jQuery methods with new methods
     $.extend($.fn, controller);
-    
+
     // jQuery.important
     $.important = $.extend(
         function(){
             var
                 args = $.makeArray(arguments),
                 makeImportant, cacheImportant;
-            
+
             if (typeof args[0] === 'string'){
                 if (typeof args[1] === 'undefined' || typeof args[1] === 'boolean'){
                     makeImportant = (args[1] !== false);
-                    
+
                     return (/<\w+.*>/).test(args[0]) ?
                          htmlStylesToImportant(args[0], makeImportant) :
                          toImportant(args[0], makeImportant);
                 }
             }
-            
+
             // If a function is passed, then execute it while the !important flag is set to true
             else if ($.isFunction(args[0])){
                 cacheImportant = important;
@@ -334,23 +339,23 @@
                 args[0].call(this);
                 $.important.status = important = cacheImportant;
             }
-            
+
             else if (typeof args[0] === 'undefined' || typeof args[0] === 'boolean'){
                 $.important.status = important = (args[0] !== false);
             }
-            
+
             return important;
         },
         {
             status: important,
-        
+
             // release native jQuery methods back to their original versions
             noConflict: function(){
                 $.each(original, function(method, fn) {
                     $.fn[method] = fn;
                 });
             },
-            
+
             declaration: cssDeclaration
         }
     );
@@ -359,7 +364,7 @@
         if (typeof cssProperty !== 'string') {
             return null;
         }
-        var elem = $(this);
+        var elem = this;
         if (elem.length === 0) {
             return null;
         }
@@ -375,7 +380,7 @@
         if (typeof cssProperty !== 'string') {
             return null;
         }
-        var elem = $(this);
+        var elem = this;
         if (elem.length === 0) {
             return null;
         }
@@ -391,7 +396,7 @@
         if (typeof cssProperty !== 'string') {
             return null;
         }
-        var elem = $(this);
+        var elem = this;
         if (elem.length === 0) {
             return null;
         }
@@ -415,11 +420,11 @@
     // jQuery(elem).important()
     $.fn.important = function(method){
         var
-            elem = $(this),
+            elem = this,
             args = $.makeArray(arguments).concat(true),
             nodeName = elem.data('nodeName'),
             property, makeImportant, fn, oldStyleElem, newStyleInsert, newStyleInsertVerb;
-                
+
         // .css() is the default method, e.g. $(elem).important({border:'1px solid red'});
         if (typeof method === 'undefined' || typeof method === 'boolean'){
             // special behaviour for specific elements
@@ -430,11 +435,11 @@
             // style elements
             if (nodeName === 'style'){
                 makeImportant = (method !== false);
-                
+
                 elem.html(
                     toImportant(elem.html(), makeImportant)
                 );
-                
+
                 var stylesheet = elem.attr('sheet');
                 if (stylesheet && stylesheet.cssRules){
                     $.each(stylesheet.cssRules, function(i, rule){
@@ -478,7 +483,7 @@
             fn = method;
             $.important.call(this, fn);
         }
-               
+
         return elem;
     };
 }(jQuery));
